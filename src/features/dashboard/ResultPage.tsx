@@ -2,10 +2,12 @@ import { Callout } from '../../components/ui/Callout';
 import { Card } from '../../components/ui/Card';
 import { TrafficLight } from '../../components/ui/TrafficLight';
 import { DISCLAIMER } from '../../config';
+import { usePlanStore } from '../../data/planStore';
 import type { Light, PlanResult } from '../../engine';
 import { formatCents, formatNumber, formatYearMonth } from '../../lib/format';
 import { useWizard } from '../wizard/context';
 import { usePlanResult } from '../wizard/usePlanResult';
+import { ExportButtons } from './ExportButtons';
 import { CashflowSection } from './sections/CashflowSection';
 import { ChecklistSection } from './sections/ChecklistSection';
 import { FundingSection } from './sections/FundingSection';
@@ -17,6 +19,7 @@ import { ScenariosSection } from './sections/ScenariosSection';
 
 export function ResultPage() {
   const { input } = useWizard();
+  const planName = usePlanStore((state) => state.plan?.name ?? 'plan');
   const result = usePlanResult(input);
 
   if (result === null) {
@@ -29,6 +32,12 @@ export function ResultPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">
+          Je dossier als pdf voor de financier, of als Excel met formules voor je boekhouder.
+        </p>
+        <ExportButtons input={input} result={result} planName={planName} />
+      </div>
       <Headline result={result} />
       <ReadinessSection result={result} />
       <FundingSection result={result} />
