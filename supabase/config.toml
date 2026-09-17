@@ -1,0 +1,32 @@
+# Supabase-project LOFIN (regio eu-west-1). Koppelen met:
+#   supabase link --project-ref knqnuhmahycborbhfaww
+project_id = "lofin"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+# De app werkt met een inloglink per e-mail; wachtwoorden slaan we niet op.
+enable_signup = true
+enable_confirmations = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[functions.delete-account]
+verify_jwt = true

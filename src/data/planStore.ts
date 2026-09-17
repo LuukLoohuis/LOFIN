@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import type { PlanInput } from '../engine';
 import { createId } from '../lib/id';
+import { supabase } from '../lib/supabase';
 import { createDefaultPlanInput, nextMonth } from './defaultPlan';
 import { browserStorage, createLocalPlanRepository, type PlanRepository, type PlanSummary, type StoredPlan } from './planRepository';
+import { createSupabasePlanRepository, migrateLocalPlans } from './supabaseRepository';
 
 export type SaveStatus = 'leeg' | 'opgeslagen' | 'bezig' | 'fout';
 
@@ -10,9 +12,14 @@ const AUTOSAVE_DELAY_MS = 800;
 
 interface PlanState {
   repository: PlanRepository;
+  /** null = als gast, in deze browser. */
+  userId: string | null;
+  movedPlans: number;
   plan: StoredPlan | null;
   status: SaveStatus;
   loading: boolean;
+  /** Schakelt tussen opslag in de browser en opslag in je account. */
+  useAccount: (userId: string | null) => Promise<void>;
   createPlan: (name: string) => Promise<StoredPlan>;
   loadPlan: (id: string) => Promise<void>;
   rename: (name: string) => void;
@@ -34,11 +41,29 @@ export const usePlanStore = create<PlanState>((set, get) => {
     }, AUTOSAVE_DELAY_MS);
   };
 
+  const localRepository = createLocalPlanRepository(browserStorage());
+
   return {
-    repository: createLocalPlanRepository(browserStorage()),
+    repository: localRepository,
+    userId: null,
+    movedPlans: 0,
     plan: null,
     status: 'leeg',
     loading: false,
+
+    useAccount: async (userId) => {
+      if (get().userId === userId) return;
+      if (userId === null) {
+        set({ userId: null, repository: localRepository, plan: null, status: 'leeg' });
+        return;
+      }
+      const client = supabase;
+      if (client === null) return;
+      const remote = createSupabasePlanRepository(client, userId);
+      // Wat je als gast maakte, verhuist mee naar je account.
+      const moved = await migrateLocalPlans(localRepository, remote).catch(() => 0);
+      set({ userId, repository: remote, movedPlans: moved, plan: null, status: 'leeg' });
+    },
 
     createPlan: async (name) => {
       const now = new Date().toISOString();

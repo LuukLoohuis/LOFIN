@@ -6,7 +6,8 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'eslint.config.js']),
+  // De edge functions draaien op Deno, met hun eigen imports en globals.
+  globalIgnores(['dist', 'coverage', 'eslint.config.js', 'supabase/functions']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

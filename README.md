@@ -50,13 +50,40 @@ De rekenkern is de enige plek waar gerekend wordt. Het dashboard, de pdf en het 
 lezen allemaal hetzelfde resultaat. Alle bedragen zijn hele centen, alle percentages
 basispunten. De rekenregels staan in [src/engine/README.md](src/engine/README.md).
 
+## Supabase
+
+Zonder Supabase-gegevens werkt de app gewoon: je plannen blijven dan in je browser. Met een
+account staan ze in de cloud (EU) en kun je op meerdere apparaten verder.
+
+```sh
+supabase link --project-ref knqnuhmahycborbhfaww
+supabase db push                      # tabellen, row level security en de opslagbucket
+supabase functions deploy delete-account
+```
+
+Zet daarna in `.env.local` (en in Vercel) `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`. De
+service-role sleutel hoort alleen bij de edge function en nooit in de frontend.
+
+Wat de migratie regelt:
+
+- elke tabel heeft row level security: je ziet alleen je eigen rijen;
+- een vastgezette prognose kan niet meer worden gewijzigd, afgedwongen met een trigger;
+- offertes staan in een afgeschermde bucket, met een map per gebruiker;
+- `delete-account` verwijdert je bestanden én je account; de rest verdwijnt via de cascade.
+
+## Deploy
+
+Vercel pikt `vercel.json` op: build met `npm run build`, alle routes naar `index.html`, en
+een paar standaard beveiligingsheaders. Zet de twee omgevingsvariabelen in het project en
+koppel de repository; verder is er niets nodig.
+
 ## Fases
 
 1. **Rekenkern en tests** — klaar
 2. **Wizard (stap 1–6) met validatie en automatisch opslaan** — klaar
 3. **Dashboard met scenario's** — klaar
 4. **Export naar pdf en Excel** — klaar
-5. Inloggen, opslag, account verwijderen, deploy
+5. **Inloggen, opslag, account verwijderen, deploy** — klaar (migraties nog uit te rollen)
 6. Prognose versus realisatie: versies, realisatie invoeren, CSV-import en de grafieken
 
 ## Privacy

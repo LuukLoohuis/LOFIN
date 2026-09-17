@@ -6,9 +6,11 @@ import { TextInput } from '../../components/ui/TextInput';
 import { DISCLAIMER } from '../../config';
 import { usePlanStore } from '../../data/planStore';
 import type { PlanSummary } from '../../data/planRepository';
+import { useSession } from '../auth/session';
 
 export function PlanListPage() {
   const navigate = useNavigate();
+  const user = useSession((state) => state.user);
   const createPlan = usePlanStore((state) => state.createPlan);
   const listPlans = usePlanStore((state) => state.listPlans);
   const removePlan = usePlanStore((state) => state.removePlan);
@@ -22,6 +24,17 @@ export function PlanListPage() {
   return (
     <div className="min-h-dvh bg-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-16">
+        <div className="mb-6 flex justify-end text-sm">
+          {user === null ? (
+            <Link to="/inloggen" className="font-medium text-blue-700 underline">
+              Inloggen
+            </Link>
+          ) : (
+            <Link to="/account" className="font-medium text-blue-700 underline">
+              {user.email}
+            </Link>
+          )}
+        </div>
         <p className="text-sm font-medium text-slate-500">LOFI — Loohuis Finance &amp; AI</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Financieringsdossier</h1>
         <p className="mt-3 max-w-2xl text-slate-700">
@@ -79,6 +92,14 @@ export function PlanListPage() {
         )}
 
         <p className="mt-10 text-xs leading-relaxed text-slate-500">{DISCLAIMER}</p>
+        <p className="mt-3 flex gap-4 text-xs text-slate-500">
+          <Link to="/privacy" className="underline">
+            Privacy
+          </Link>
+          <Link to="/cookies" className="underline">
+            Cookies
+          </Link>
+        </p>
       </div>
     </div>
   );
