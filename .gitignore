@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+coverage
+*.local
+*.tsbuildinfo
+
+# Omgevingsvariabelen: nooit committen
+.env
+.env.*
+!.env.example
+
+.vercel
+supabase/.temp
+supabase/.branches
+
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+npm-debug.log*
