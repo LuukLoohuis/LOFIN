@@ -1,4 +1,4 @@
-export { BRANCH_PRESETS, type BranchPreset } from './branches';
+export { BRANCH_PRESETS, FALLBACK_BRANCH, type BranchPreset } from './branches';
 export { DOCUMENT_CHECKLIST } from './checklists';
 export { DISCLAIMER } from './disclaimer';
 export { DEFAULT_SCENARIO_SETTINGS, defaultEngineConfig } from './engine';

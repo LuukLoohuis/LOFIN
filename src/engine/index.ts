@@ -6,7 +6,7 @@ export { calculatePlan } from './plan/calculatePlan';
 export { buildChecklist } from './plan/completeness';
 export { estimateWorkingCapital } from './plan/financingNeed';
 export { annuityPayment, buildSchedule } from './plan/loans';
-export { SEASONALITY_TOTAL, SEASONALITY_UNIT, validateSeasonality } from './plan/revenue';
+export { baseMonthlyRevenue, SEASONALITY_TOTAL, SEASONALITY_UNIT, validateSeasonality } from './plan/revenue';
 export { corporateTax } from './plan/tax';
 export { ENGINE_VERSION } from './version';
 export type * from './types/config';

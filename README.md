@@ -37,9 +37,13 @@ npm run dev
 
 ```
 src/
-├─ engine/    rekenkern: zuiver, deterministisch, volledig getest (zie engine/README.md)
-├─ config/    grenswaarden, branchevoorbeelden, checklists, teksten
-└─ ...        wizard, dashboard, exports en opslag volgen in latere fases
+├─ engine/      rekenkern: zuiver, deterministisch, volledig getest (zie engine/README.md)
+├─ config/      grenswaarden, branchevoorbeelden, checklists, teksten
+├─ schema/      zod per wizardstap; de types komen uit de rekenkern
+├─ data/        opslag van plannen (nu de browser, vanaf fase 5 ook Supabase)
+├─ components/  invoervelden en opmaak
+├─ features/    wizard, plannenlijst, resultaat
+└─ app/         routes
 ```
 
 De rekenkern is de enige plek waar gerekend wordt. Het dashboard, de pdf en het Excel-bestand
@@ -49,7 +53,7 @@ basispunten. De rekenregels staan in [src/engine/README.md](src/engine/README.md
 ## Fases
 
 1. **Rekenkern en tests** — klaar
-2. Wizard (stap 1–6) met validatie en automatisch opslaan
+2. **Wizard (stap 1–6) met validatie en automatisch opslaan** — klaar
 3. Dashboard met scenario's
 4. Export naar pdf en Excel
 5. Inloggen, opslag, account verwijderen, deploy

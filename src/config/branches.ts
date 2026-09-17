@@ -12,6 +12,18 @@ export interface BranchPreset {
   note: string;
 }
 
+/** Wat je krijgt als je branche er niet bij staat. */
+export const FALLBACK_BRANCH: BranchPreset = {
+  id: 'overig',
+  label: 'Overig',
+  seasonality: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+  costOfSalesBp: 3000,
+  debtorDays: 30,
+  creditorDays: 30,
+  revenueModel: 'maandbedrag',
+  note: 'Geen seizoenspatroon; pas het zelf aan.',
+};
+
 /** Startpunten per branche, altijd aan te passen. De percentages zijn indicatief. */
 export const BRANCH_PRESETS: readonly BranchPreset[] = [
   {
@@ -114,14 +126,5 @@ export const BRANCH_PRESETS: readonly BranchPreset[] = [
     revenueModel: 'opdrachten',
     note: 'Brandstof en onderhoud zijn de grootste variabele kosten.',
   },
-  {
-    id: 'overig',
-    label: 'Overig',
-    seasonality: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-    costOfSalesBp: 3000,
-    debtorDays: 30,
-    creditorDays: 30,
-    revenueModel: 'maandbedrag',
-    note: 'Geen seizoenspatroon; pas het zelf aan.',
-  },
+  FALLBACK_BRANCH,
 ];
