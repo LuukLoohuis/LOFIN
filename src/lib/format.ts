@@ -11,7 +11,8 @@ const euroWhole = new Intl.NumberFormat('nl-NL', {
 const decimal = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function formatCents(cents: Cents): string {
-  return euro.format(cents / 100);
+  // Zonder deze stap wordt een omgedraaid nulbedrag '€ -0,00'.
+  return euro.format(cents === 0 ? 0 : cents / 100);
 }
 
 /** Zonder centen: voor tabellen en grafieken waar de cent niet uitmaakt. */

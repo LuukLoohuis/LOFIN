@@ -143,7 +143,15 @@ export function buildLedger(input: PlanInput, config: EngineConfig, scenarioDelt
   // Maandloop: kredietrente hangt af van het saldo, de vpb van het resultaat inclusief die rente.
   const credits = financing.lines.filter(isCreditLine).map((line: CreditLine) => ({
     line,
-    usage: { lineId: line.id, limit: line.limitCents, drawn: zeros(length), interest: zeros(length), periods: [] },
+    usage: {
+      lineId: line.id,
+      description: line.description,
+      limit: line.limitCents,
+      annualRateBp: line.annualRateBp,
+      drawn: zeros(length),
+      interest: zeros(length),
+      periods: [],
+    },
   }));
   const interest = zeros(length);
   const taxAccrual = zeros(length);

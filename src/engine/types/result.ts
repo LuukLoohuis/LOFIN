@@ -128,10 +128,13 @@ export interface PeriodDebtSummary {
 
 export interface LoanSchedule {
   lineId: string;
+  description: string;
   origin: 'nieuw' | 'bestaand';
   kind: LoanKind | 'bestaande_schuld';
   subordinated: boolean;
   principal: Cents;
+  annualRateBp: Bp;
+  termMonths: number;
   /** Termijnbedrag na de aflossingsvrije periode; alleen bij annuïteit. */
   annuityPayment: Cents | null;
   /** Vaste aflossing per maand; alleen bij lineair. */
@@ -142,7 +145,9 @@ export interface LoanSchedule {
 
 export interface CreditLineUsage {
   lineId: string;
+  description: string;
   limit: Cents;
+  annualRateBp: Bp;
   drawn: Cents[];
   interest: Cents[];
   periods: PeriodDebtSummary[];

@@ -54,7 +54,7 @@ basispunten. De rekenregels staan in [src/engine/README.md](src/engine/README.md
 
 1. **Rekenkern en tests** — klaar
 2. **Wizard (stap 1–6) met validatie en automatisch opslaan** — klaar
-3. Dashboard met scenario's
+3. **Dashboard met scenario's** — klaar
 4. Export naar pdf en Excel
 5. Inloggen, opslag, account verwijderen, deploy
 6. Prognose versus realisatie: versies, realisatie invoeren, CSV-import en de grafieken

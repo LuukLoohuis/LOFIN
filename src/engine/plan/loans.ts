@@ -102,7 +102,10 @@ export function periodDebtSummaries(
 }
 
 function toLoanSchedule(
-  base: Pick<LoanSchedule, 'lineId' | 'origin' | 'kind' | 'subordinated' | 'principal'>,
+  base: Pick<
+    LoanSchedule,
+    'lineId' | 'description' | 'origin' | 'kind' | 'subordinated' | 'principal' | 'annualRateBp' | 'termMonths'
+  >,
   schedule: ReturnType<typeof buildSchedule>,
   timeline: Timeline,
 ): LoanSchedule {
@@ -128,10 +131,13 @@ export function buildLoanSchedules(financing: FinancingInput, timeline: Timeline
     toLoanSchedule(
       {
         lineId: line.id,
+        description: line.description,
         origin: 'nieuw',
         kind: line.kind,
         subordinated: line.kind === 'achtergestelde_lening',
         principal: line.principalCents,
+        annualRateBp: line.annualRateBp,
+        termMonths: line.termMonths,
       },
       buildSchedule(
         {
@@ -152,10 +158,13 @@ export function buildLoanSchedules(financing: FinancingInput, timeline: Timeline
     toLoanSchedule(
       {
         lineId: debt.id,
+        description: debt.description,
         origin: 'bestaand',
         kind: 'bestaande_schuld',
         subordinated: false,
         principal: debt.outstandingCents,
+        annualRateBp: debt.annualRateBp,
+        termMonths: debt.remainingMonths,
       },
       buildSchedule(
         {
