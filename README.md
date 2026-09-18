@@ -60,13 +60,16 @@ basispunten. De rekenregels staan in [src/engine/README.md](src/engine/README.md
 Zonder Supabase-gegevens werkt de app gewoon: je plannen blijven dan in je browser. Met een
 account staan ze in de cloud (EU) en kun je op meerdere apparaten verder.
 
+Het project staat klaar: de migratie is uitgerold en `delete-account` draait. Opnieuw uitrollen
+of bijwerken gaat zo:
+
 ```sh
 supabase link --project-ref knqnuhmahycborbhfaww
 supabase db push                      # tabellen, row level security en de opslagbucket
 supabase functions deploy delete-account
 ```
 
-Zet daarna in `.env.local` (en in Vercel) `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`. De
+Zet in `.env.local` (en in Vercel) `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`. De
 service-role sleutel hoort alleen bij de edge function en nooit in de frontend.
 
 Wat de migratie regelt:
@@ -88,7 +91,7 @@ koppel de repository; verder is er niets nodig.
 2. **Wizard (stap 1–6) met validatie en automatisch opslaan** — klaar
 3. **Dashboard met scenario's** — klaar
 4. **Export naar pdf en Excel** — klaar
-5. **Inloggen, opslag, account verwijderen, deploy** — klaar (migraties nog uit te rollen)
+5. **Inloggen, opslag, account verwijderen, deploy** — klaar
 6. **Prognose versus realisatie** — klaar
 
 ## Privacy

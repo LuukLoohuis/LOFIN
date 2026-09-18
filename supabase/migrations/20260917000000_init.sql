@@ -3,7 +3,7 @@
 -- row level security. De tool vraagt nooit om een bsn, rekeningnummer of bankinloggegevens,
 -- dus die velden bestaan hier ook niet.
 
-create extension if not exists "pgcrypto";
+-- gen_random_uuid() zit in PostgreSQL zelf sinds versie 13; geen extensie nodig.
 
 -- Plannen
 

@@ -21,7 +21,6 @@ port = 54323
 enabled = true
 # De app werkt met een inloglink per e-mail; wachtwoorden slaan we niet op.
 enable_signup = true
-enable_confirmations = true
 
 [auth.email]
 enable_signup = true
