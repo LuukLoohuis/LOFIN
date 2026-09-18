@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PlanInput } from '../engine';
+import { addMonths, parseYearMonth, type ActualMonth, type ForecastSnapshot, type PlanInput } from '../engine';
 import { createDefaultPlanInput } from './defaultPlan';
-import type { PlanRepository, PlanSummary } from './planRepository';
+import type { ImportMapping, PlanRepository, PlanSummary } from './planRepository';
 
 /** De wizardstappen staan als losse rijen in plan_inputs; zo kan één stap apart bewaren. */
 const SECTIONS = [
@@ -98,7 +98,158 @@ export function createSupabasePlanRepository(client: SupabaseClient, userId: str
       const { error } = await client.from('plans').delete().eq('id', id);
       if (error !== null) throw new Error(error.message);
     },
+
+    listVersions: async (planId) => {
+      const { data, error } = await client
+        .from('plan_versions')
+        .select('id, version_no, kind, note, snapshot, created_at')
+        .eq('plan_id', planId)
+        .order('version_no', { ascending: true })
+        .overrideTypes<VersionRow[], { merge: false }>();
+      if (error !== null) throw new Error(error.message);
+      return data.map(toSnapshot);
+    },
+
+    addVersion: async (planId, snapshot) => {
+      const { error } = await client.from('plan_versions').insert({
+        plan_id: planId,
+        version_no: snapshot.versionNo,
+        kind: snapshot.kind,
+        note: snapshot.note,
+        snapshot: {
+          createdOn: snapshot.createdOn,
+          engineVersion: snapshot.engineVersion,
+          startMonth: snapshot.startMonth,
+          series: snapshot.series,
+        },
+      });
+      if (error !== null) throw new Error(error.message);
+    },
+
+    listActuals: async (planId) => {
+      const { data: plan, error: planError } = await client
+        .from('plan_inputs')
+        .select('data')
+        .eq('plan_id', planId)
+        .eq('step', 'assumptions')
+        .maybeSingle<{ data: { startMonth: string } }>();
+      if (planError !== null) throw new Error(planError.message);
+      const startMonth = plan === null ? '2027-01' : plan.data.startMonth;
+
+      const { data, error } = await client
+        .from('actuals')
+        .select('month, category, amount_cents, status, source')
+        .eq('plan_id', planId)
+        .overrideTypes<ActualRow[], { merge: false }>();
+      if (error !== null) throw new Error(error.message);
+      return groupActuals(data, startMonth);
+    },
+
+    saveActualMonth: async (planId, month) => {
+      const { data: plan, error: planError } = await client
+        .from('plan_inputs')
+        .select('data')
+        .eq('plan_id', planId)
+        .eq('step', 'assumptions')
+        .maybeSingle<{ data: { startMonth: string } }>();
+      if (planError !== null) throw new Error(planError.message);
+      const startMonth = plan === null ? '2027-01' : plan.data.startMonth;
+
+      const rows = Object.entries(month.values).map(([category, amount]) => ({
+        plan_id: planId,
+        month: monthToDate(startMonth, month.month),
+        category,
+        amount_cents: amount,
+        status: month.status,
+        source: month.source === 'csv' ? 'csv' : 'manual',
+      }));
+      if (rows.length === 0) return;
+
+      const { error } = await client.from('actuals').upsert(rows, { onConflict: 'plan_id,month,category' });
+      if (error !== null) throw new Error(error.message);
+    },
+
+    listMappings: async () => {
+      const { data, error } = await client
+        .from('import_mappings')
+        .select('id, name, mapping')
+        .eq('user_id', userId)
+        .overrideTypes<ImportMapping[], { merge: false }>();
+      if (error !== null) throw new Error(error.message);
+      return data;
+    },
+
+    saveMapping: async (mapping) => {
+      const { error } = await client
+        .from('import_mappings')
+        .upsert({ id: mapping.id, user_id: userId, name: mapping.name, mapping: mapping.mapping });
+      if (error !== null) throw new Error(error.message);
+    },
   };
+}
+
+interface VersionRow {
+  id: string;
+  version_no: number;
+  kind: 'baseline' | 'reforecast';
+  note: string | null;
+  created_at: string;
+  snapshot: { createdOn: string; engineVersion: string; startMonth: string; series: ForecastSnapshot['series'] };
+}
+
+interface ActualRow {
+  month: string;
+  category: string;
+  amount_cents: number;
+  status: 'open' | 'afgesloten';
+  source: 'manual' | 'csv';
+}
+
+function toSnapshot(row: VersionRow): ForecastSnapshot {
+  return {
+    id: row.id,
+    versionNo: row.version_no,
+    kind: row.kind,
+    note: row.note,
+    createdOn: row.snapshot.createdOn,
+    engineVersion: row.snapshot.engineVersion,
+    startMonth: row.snapshot.startMonth,
+    series: row.snapshot.series,
+  };
+}
+
+/** Prognosemaand 1 is de startmaand; in de database staat een echte datum. */
+export function monthToDate(startMonth: string, month: number): string {
+  const start = parseYearMonth(startMonth);
+  if (start === null) throw new Error(`Ongeldige startmaand: ${startMonth}`);
+  const target = addMonths(start, Math.max(0, month - 1));
+  return `${target.year}-${String(target.month).padStart(2, '0')}-01`;
+}
+
+export function dateToMonth(startMonth: string, date: string): number {
+  const start = parseYearMonth(startMonth);
+  const value = parseYearMonth(date.slice(0, 7));
+  if (start === null || value === null) return 0;
+  return (value.year - start.year) * 12 + (value.month - start.month) + 1;
+}
+
+function groupActuals(rows: readonly ActualRow[], startMonth: string): ActualMonth[] {
+  const months = new Map<number, ActualMonth>();
+  for (const row of rows) {
+    const month = dateToMonth(startMonth, row.month);
+    const existing = months.get(month) ?? {
+      month,
+      status: row.status,
+      source: row.source === 'csv' ? ('csv' as const) : ('handmatig' as const),
+      values: {},
+    };
+    months.set(month, {
+      ...existing,
+      status: row.status,
+      values: { ...existing.values, [row.category]: row.amount_cents },
+    });
+  }
+  return [...months.values()].sort((left, right) => left.month - right.month);
 }
 
 /** Ontbrekende stappen vallen terug op de standaardwaarden, zodat oude plannen blijven werken. */

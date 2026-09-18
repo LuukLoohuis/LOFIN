@@ -7,6 +7,7 @@ import { DISCLAIMER } from '../../config';
 import { usePlanStore } from '../../data/planStore';
 import type { PlanSummary } from '../../data/planRepository';
 import { useSession } from '../auth/session';
+import { createDemoCase } from '../../demo/loodgieter';
 
 export function PlanListPage() {
   const navigate = useNavigate();
@@ -64,6 +65,29 @@ export function PlanListPage() {
               Beginnen
             </Button>
           </form>
+          <p className="mt-4 text-xs text-slate-500">
+            Liever eerst kijken?{' '}
+            <button
+              type="button"
+              className="font-medium text-blue-700 underline"
+              onClick={() => {
+                const demo = createDemoCase();
+                const repository = usePlanStore.getState().repository;
+                void (async () => {
+                  await repository.save(demo.plan);
+                  const existing = await repository.listVersions(demo.plan.id);
+                  if (existing.length === 0) {
+                    for (const version of demo.versions) await repository.addVersion(demo.plan.id, version);
+                    for (const month of demo.actuals) await repository.saveActualMonth(demo.plan.id, month);
+                  }
+                  await navigate(`/plan/${demo.plan.id}/realisatie`);
+                })();
+              }}
+            >
+              Open de voorbeeldcasus
+            </button>{' '}
+            — een loodgieter met veertien maanden realisatie en een bijgestelde prognose.
+          </p>
         </Card>
 
         {plans.length > 0 && (

@@ -7,6 +7,7 @@ import { StepHistorie } from '../features/wizard/steps/StepHistorie';
 import { StepOnderneming } from '../features/wizard/steps/StepOnderneming';
 import { StepToelichting } from '../features/wizard/steps/StepToelichting';
 import { ResultPage } from '../features/dashboard/ResultPage';
+import { AccuracyPage } from '../features/accuracy/AccuracyPage';
 
 const PAGES: Partial<Record<string, ComponentType>> = {
   onderneming: StepOnderneming,
@@ -16,6 +17,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   financiering: StepFinanciering,
   toelichting: StepToelichting,
   resultaat: ResultPage,
+  realisatie: AccuracyPage,
 };
 
 export function StepRouter() {

@@ -79,3 +79,38 @@ export const SCENARIO_LABELS: Record<string, string> = {
   pessimistisch: 'Pessimistisch',
   optimistisch: 'Optimistisch',
 };
+
+/**
+ * De signalen uit de accuracy-kern in gewone taal. Beschrijvend: ze zeggen wat er in je
+ * cijfers zit. Over je eigen prognose bijstellen mag; over geld lenen of uitgeven niet.
+ */
+export const INSIGHT_TEXTS: Partial<Record<string, (params: Record<string, string | number>) => string>> = {
+  'te-weinig-data': (p) =>
+    `Je hebt ${formatNumber(Number(p['closedMonths']))} ${Number(p['closedMonths']) === 1 ? 'maand' : 'maanden'} afgesloten. Vanaf drie maanden kunnen we zeggen hoe goed je prognose was.`,
+  'prognose-te-hoog': (p) =>
+    `Je ${metricText(p['metric'])} lag de afgelopen ${formatNumber(Number(p['months']))} maanden gemiddeld ${formatNumber(Number(p['biasPct']), 1)}% onder je prognose. Je kunt je prognose voor de komende maanden daarop bijstellen.`,
+  'prognose-te-laag': (p) =>
+    `Je ${metricText(p['metric'])} lag de afgelopen ${formatNumber(Number(p['months']))} maanden gemiddeld ${formatNumber(Number(p['biasPct']), 1)}% boven je prognose. Je begrootte dus voorzichtiger dan nodig.`,
+  'loopt-uit-de-pas': (p) =>
+    `Je prognose wijkt structureel dezelfde kant op af (tracking signal ${formatNumber(Number(p['trackingSignal']), 1)}, buiten ±${formatNumber(Number(p['limit']))}). Dat is geen toeval meer.`,
+  'betrouwbare-prognose': (p) =>
+    `${formatNumber(Number(p['hitRatePct']), 0)}% van je maanden bleef binnen de bandbreedte, met een prognosekwaliteit van ${formatNumber(Number(p['accuracyPct']), 0)}%. Dat is een cijfer waar een financier iets aan heeft.`,
+  'reeks-meevallers': (p) =>
+    `${formatNumber(Number(p['months']))} maanden op rij viel je ${metricText(p['metric'])} gunstiger uit dan begroot.`,
+  'reeks-tegenvallers': (p) =>
+    `${formatNumber(Number(p['months']))} maanden op rij viel je ${metricText(p['metric'])} ongunstiger uit dan begroot.`,
+  'kas-onder-buffer': (p) =>
+    `In maand ${formatNumber(Number(p['month']))} zakt je saldo volgens de nieuwste prognose naar ${formatCents(Number(p['balance']))}, onder je buffer van ${formatCents(Number(p['buffer']))}.`,
+};
+
+const METRIC_TEXTS: Record<string, string> = {
+  omzet: 'omzet',
+  brutomarge: 'brutomarge',
+  vasteKosten: 'vaste kosten',
+  eindsaldo: 'banksaldo',
+  dscr12: 'DSCR',
+};
+
+function metricText(metric: string | number | undefined): string {
+  return METRIC_TEXTS[String(metric)] ?? 'cijfers';
+}

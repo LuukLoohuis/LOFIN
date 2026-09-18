@@ -1,4 +1,4 @@
-import type { PlanInput } from '../engine';
+import type { ActualMonth, ForecastSnapshot, PlanInput } from '../engine';
 
 export interface StoredPlan {
   id: string;
@@ -14,60 +14,104 @@ export interface PlanSummary {
   updatedAt: string;
 }
 
+/** Een opgeslagen kolomindeling van een boekhoudexport. */
+export interface ImportMapping {
+  id: string;
+  name: string;
+  mapping: unknown;
+}
+
 /**
  * Waar een plan wordt bewaard. Zolang iemand nog geen account heeft, is dat de browser;
- * vanaf fase 5 komt daar Supabase bij, met dezelfde methodes.
+ * met een account komt dezelfde interface uit op Supabase.
  */
 export interface PlanRepository {
   list(): Promise<PlanSummary[]>;
   load(id: string): Promise<StoredPlan | null>;
   save(plan: StoredPlan): Promise<void>;
   remove(id: string): Promise<void>;
+
+  listVersions(planId: string): Promise<ForecastSnapshot[]>;
+  /** Een vastgezette prognose wordt nooit overschreven; er komt een versie bij. */
+  addVersion(planId: string, snapshot: ForecastSnapshot): Promise<void>;
+
+  listActuals(planId: string): Promise<ActualMonth[]>;
+  saveActualMonth(planId: string, month: ActualMonth): Promise<void>;
+
+  listMappings(): Promise<ImportMapping[]>;
+  saveMapping(mapping: ImportMapping): Promise<void>;
 }
 
 const PREFIX = 'lofin.plan.';
+const VERSIONS_PREFIX = 'lofin.versions.';
+const ACTUALS_PREFIX = 'lofin.actuals.';
 const INDEX_KEY = 'lofin.plans';
+const MAPPINGS_KEY = 'lofin.mappings';
 
-/** Opslag in de browser. Werkt ook als de browser opslag weigert: dan is er simpelweg niets bewaard. */
+/** Opslag in de browser. Werkt ook als de browser opslag weigert: dan is er niets bewaard. */
 export function createLocalPlanRepository(storage: Storage): PlanRepository {
-  const readIndex = (): PlanSummary[] => {
-    const raw = storage.getItem(INDEX_KEY);
-    if (raw === null) return [];
+  const read = <T>(key: string, fallback: T): T => {
+    const raw = storage.getItem(key);
+    if (raw === null) return fallback;
     try {
-      const parsed: unknown = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as PlanSummary[]) : [];
+      return JSON.parse(raw) as T;
     } catch {
-      return [];
+      return fallback;
     }
   };
 
-  const writeIndex = (summaries: PlanSummary[]) => {
-    storage.setItem(INDEX_KEY, JSON.stringify(summaries));
+  const write = (key: string, value: unknown) => {
+    storage.setItem(key, JSON.stringify(value));
   };
 
-  return {
-    list: () => Promise.resolve(readIndex().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))),
+  const readIndex = () => read<PlanSummary[]>(INDEX_KEY, []);
 
-    load: (id) => {
-      const raw = storage.getItem(PREFIX + id);
-      if (raw === null) return Promise.resolve(null);
-      try {
-        return Promise.resolve(JSON.parse(raw) as StoredPlan);
-      } catch {
-        return Promise.resolve(null);
-      }
-    },
+  return {
+    list: () => Promise.resolve([...readIndex()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))),
+
+    load: (id) => Promise.resolve(read<StoredPlan | null>(PREFIX + id, null)),
 
     save: (plan) => {
-      storage.setItem(PREFIX + plan.id, JSON.stringify(plan));
+      write(PREFIX + plan.id, plan);
       const others = readIndex().filter((summary) => summary.id !== plan.id);
-      writeIndex([...others, { id: plan.id, name: plan.name, updatedAt: plan.updatedAt }]);
+      write(INDEX_KEY, [...others, { id: plan.id, name: plan.name, updatedAt: plan.updatedAt }]);
       return Promise.resolve();
     },
 
     remove: (id) => {
       storage.removeItem(PREFIX + id);
-      writeIndex(readIndex().filter((summary) => summary.id !== id));
+      storage.removeItem(VERSIONS_PREFIX + id);
+      storage.removeItem(ACTUALS_PREFIX + id);
+      write(
+        INDEX_KEY,
+        readIndex().filter((summary) => summary.id !== id),
+      );
+      return Promise.resolve();
+    },
+
+    listVersions: (planId) => Promise.resolve(read<ForecastSnapshot[]>(VERSIONS_PREFIX + planId, [])),
+
+    addVersion: (planId, snapshot) => {
+      const versions = read<ForecastSnapshot[]>(VERSIONS_PREFIX + planId, []);
+      write(VERSIONS_PREFIX + planId, [...versions, snapshot]);
+      return Promise.resolve();
+    },
+
+    listActuals: (planId) => Promise.resolve(read<ActualMonth[]>(ACTUALS_PREFIX + planId, [])),
+
+    saveActualMonth: (planId, month) => {
+      const actuals = read<ActualMonth[]>(ACTUALS_PREFIX + planId, []);
+      const others = actuals.filter((candidate) => candidate.month !== month.month);
+      write(ACTUALS_PREFIX + planId, [...others, month].sort((a, b) => a.month - b.month));
+      return Promise.resolve();
+    },
+
+    listMappings: () => Promise.resolve(read<ImportMapping[]>(MAPPINGS_KEY, [])),
+
+    saveMapping: (mapping) => {
+      const mappings = read<ImportMapping[]>(MAPPINGS_KEY, []);
+      const others = mappings.filter((candidate) => candidate.id !== mapping.id);
+      write(MAPPINGS_KEY, [...others, mapping]);
       return Promise.resolve();
     },
   };

@@ -32,6 +32,7 @@ npm run dev
 | `npm run typecheck` | TypeScript zonder build |
 | `npm run lint` | ESLint |
 | `npm run build` | productiebuild |
+| `npx vite-node scripts/exportSample.tsx -- <map>` | pdf's en Excel van de voorbeeldcasus wegschrijven |
 
 ## Opbouw
 
@@ -42,7 +43,11 @@ src/
 ├─ schema/      zod per wizardstap; de types komen uit de rekenkern
 ├─ data/        opslag van plannen (nu de browser, vanaf fase 5 ook Supabase)
 ├─ components/  invoervelden en opmaak
-├─ features/    wizard, plannenlijst, resultaat
+├─ exports/     pdf (dossier en voortgangsrapportage) en Excel met formules
+├─ import/      CSV-import van je boekhoudexport
+├─ charts/      grafiekthema, opmaak en de schil met tabelweergave
+├─ demo/        voorbeeldcasus met veertien maanden realisatie
+├─ features/    wizard, dashboard, realisatie, account
 └─ app/         routes
 ```
 
@@ -84,7 +89,7 @@ koppel de repository; verder is er niets nodig.
 3. **Dashboard met scenario's** — klaar
 4. **Export naar pdf en Excel** — klaar
 5. **Inloggen, opslag, account verwijderen, deploy** — klaar (migraties nog uit te rollen)
-6. Prognose versus realisatie: versies, realisatie invoeren, CSV-import en de grafieken
+6. **Prognose versus realisatie** — klaar
 
 ## Privacy
 

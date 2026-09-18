@@ -40,7 +40,7 @@ export function WizardLayout() {
     );
   }
 
-  const onResult = slug === 'resultaat';
+  const onResult = slug === 'resultaat' || slug === 'realisatie';
   const currentIndex = WIZARD_STEPS.findIndex((step) => step.slug === slug);
   const previous = onResult ? WIZARD_STEPS[WIZARD_STEPS.length - 1] : currentIndex > 0 ? WIZARD_STEPS[currentIndex - 1] : undefined;
   const next = onResult ? undefined : WIZARD_STEPS[currentIndex + 1];
@@ -66,7 +66,10 @@ export function WizardLayout() {
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <SaveIndicator status={status} />
             <Link to={`/plan/${plan.id}/resultaat`} className="font-medium text-blue-700 underline">
-              Naar het resultaat
+              Resultaat
+            </Link>
+            <Link to={`/plan/${plan.id}/realisatie`} className="font-medium text-blue-700 underline">
+              Realisatie
             </Link>
           </div>
         </div>

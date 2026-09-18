@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import type { PlanInput } from '../engine';
+import {
+  ENGINE_VERSION,
+  latestVersion,
+  metricSeriesFromResult,
+  type ActualMonth,
+  type ForecastSnapshot,
+  type PlanInput,
+  type PlanResult,
+} from '../engine';
 import { createId } from '../lib/id';
 import { supabase } from '../lib/supabase';
 import { createDefaultPlanInput, nextMonth } from './defaultPlan';
@@ -18,8 +26,19 @@ interface PlanState {
   plan: StoredPlan | null;
   status: SaveStatus;
   loading: boolean;
+  /** Vastgezette prognoses en de ingevoerde realisatie van het geopende plan. */
+  versions: ForecastSnapshot[];
+  actuals: ActualMonth[];
   /** Schakelt tussen opslag in de browser en opslag in je account. */
   useAccount: (userId: string | null) => Promise<void>;
+  lockVersion: (params: {
+    kind: ForecastSnapshot['kind'];
+    note: string | null;
+    result: PlanResult;
+    today: string;
+  }) => Promise<void>;
+  saveActualMonth: (month: ActualMonth) => Promise<void>;
+  importActualMonths: (months: readonly ActualMonth[]) => Promise<void>;
   createPlan: (name: string) => Promise<StoredPlan>;
   loadPlan: (id: string) => Promise<void>;
   rename: (name: string) => void;
@@ -50,6 +69,8 @@ export const usePlanStore = create<PlanState>((set, get) => {
     plan: null,
     status: 'leeg',
     loading: false,
+    versions: [],
+    actuals: [],
 
     useAccount: async (userId) => {
       if (get().userId === userId) return;
@@ -62,7 +83,37 @@ export const usePlanStore = create<PlanState>((set, get) => {
       const remote = createSupabasePlanRepository(client, userId);
       // Wat je als gast maakte, verhuist mee naar je account.
       const moved = await migrateLocalPlans(localRepository, remote).catch(() => 0);
-      set({ userId, repository: remote, movedPlans: moved, plan: null, status: 'leeg' });
+      set({ userId, repository: remote, movedPlans: moved, plan: null, status: 'leeg', versions: [], actuals: [] });
+    },
+
+    lockVersion: async ({ kind, note, result, today }) => {
+      const plan = get().plan;
+      if (plan === null) return;
+      const versions = get().versions;
+      const snapshot: ForecastSnapshot = {
+        id: createId('versie'),
+        versionNo: (latestVersion(versions)?.versionNo ?? 0) + 1,
+        kind,
+        createdOn: today,
+        note,
+        engineVersion: ENGINE_VERSION,
+        startMonth: plan.input.assumptions.startMonth,
+        series: metricSeriesFromResult(result),
+      };
+      await get().repository.addVersion(plan.id, snapshot);
+      set({ versions: [...versions, snapshot] });
+    },
+
+    saveActualMonth: async (month) => {
+      const plan = get().plan;
+      if (plan === null) return;
+      await get().repository.saveActualMonth(plan.id, month);
+      const others = get().actuals.filter((candidate) => candidate.month !== month.month);
+      set({ actuals: [...others, month].sort((left, right) => left.month - right.month) });
+    },
+
+    importActualMonths: async (months) => {
+      for (const month of months) await get().saveActualMonth(month);
     },
 
     createPlan: async (name) => {
@@ -83,7 +134,15 @@ export const usePlanStore = create<PlanState>((set, get) => {
       if (get().plan?.id === id) return;
       set({ loading: true });
       const plan = await get().repository.load(id);
-      set({ plan, loading: false, status: plan === null ? 'leeg' : 'opgeslagen' });
+      if (plan === null) {
+        set({ plan: null, loading: false, status: 'leeg', versions: [], actuals: [] });
+        return;
+      }
+      const [versions, actuals] = await Promise.all([
+        get().repository.listVersions(id),
+        get().repository.listActuals(id),
+      ]);
+      set({ plan, versions, actuals, loading: false, status: 'opgeslagen' });
     },
 
     rename: (name) => {

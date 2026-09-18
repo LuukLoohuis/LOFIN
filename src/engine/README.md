@@ -224,3 +224,55 @@ De specificatie noemt € 3.225,82 rente en € 8.654,90 aflossing. Dat is dezel
 afronding per maand (zoals Excel's `CUM.RENTE`). Omdat de rente hier elke maand op centen wordt
 afgerond, verschuift er twee cent tussen rente en aflossing; de schuldendienst is in beide
 gevallen € 11.880,72 en de DSCR dus gelijk.
+
+## Prognose versus realisatie
+
+Vanaf het moment dat je een prognose vastzet, kun je hem naast je werkelijke cijfers leggen.
+
+### Versies
+
+Een vastgezette prognose is een momentopname: de berekende reeksen worden bewaard zoals ze
+toen waren, samen met de versie van de rekenkern. Een oude versie verandert dus niet als de
+rekenkern verandert. De eerste versie is de `baseline` (wat je hebt ingediend), elke latere
+een `reforecast` met een reden erbij.
+
+Vergelijken kan met de baseline, of met de prognose van een maand of een kwartaal eerder. Voor
+dat laatste pakken we per maand de nieuwste versie die op de laatste dag van maand *t − h* al
+bestond. Is die er niet, dan telt die maand niet mee.
+
+### Kengetallen
+
+Voor afgesloten maanden met realisatie `A` en prognose `F`:
+
+| Grootheid | Berekening |
+| --- | --- |
+| Afwijking | `e = A − F` |
+| Afwijking % | `e / |F|` — delen door de absolute prognose, zodat een minteken altijd 'lager dan verwacht' betekent, ook bij een negatief verwacht saldo |
+| WAPE | `Σ|e| / Σ|A|` |
+| Prognosekwaliteit | `max(0, 1 − WAPE)` |
+| Bias | `Σ(F − A) / Σ|A|`; positief = de prognose lag te hoog |
+| MAD | `Σ|e| / n` |
+| Tracking signal | `Σe / MAD`; buiten ±4 loopt de prognose structureel één kant op |
+| Hit rate | aandeel maanden met `|e| ≤ tolerantie × |F|`; de grens telt mee |
+
+WAPE en niet MAPE, omdat een seizoensbedrijf stille maanden heeft: daar blaast MAPE elke
+afwijking op. De hit rate vergelijkt met hele getallen (`|e| × 10.000 ≤ tolerantie_bp × |F|`),
+zodat precies op de grens er nog bij hoort.
+
+Onder de drie afgesloten maanden tonen we geen kengetallen.
+
+### Grootheden
+
+Omzet, brutomarge, vaste kosten (inclusief personeel), eindsaldo en een voortschrijdende DSCR.
+Die laatste rekent met de laatste twaalf afgesloten maanden, of met minder als er nog geen
+twaalf zijn — anders zou de ratio pas na een jaar iets laten zien. Uit de realisatie volgt de
+kasstroom als omzet − inkoop − vaste kosten − privé-opnamen (bij een bv zonder privé-opnamen);
+de afschrijving valt in de kasstroom tegen zichzelf weg.
+
+Bij kosten is een meevaller juist een lager getal: dat draait de kleur van de afwijking om.
+
+### Vereenvoudigingen
+
+- De realisatie kent geen afschrijving, vpb of dividend; die komen uit de prognose.
+- Een maand is helemaal open of helemaal afgesloten, niet per post.
+- Bij een bv blijven vpb en dividend buiten de kasstroom uit de realisatie.

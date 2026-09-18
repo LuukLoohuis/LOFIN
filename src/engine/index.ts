@@ -1,4 +1,4 @@
-export { buildTimeline, parseYearMonth, quarterOf, type Timeline, type YearMonth } from './core/calendar';
+export { addMonths, buildTimeline, parseYearMonth, quarterOf, type Timeline, type YearMonth } from './core/calendar';
 export { EngineInputError } from './core/errors';
 export { applyBp, cumulativeShare, monthlyInterest, roundCents } from './core/money';
 export { shiftByDays } from './core/timing';
