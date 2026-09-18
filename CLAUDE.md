@@ -20,7 +20,10 @@ financiering. Grenswaarden heten altijd indicatief.
 
 ## Tests
 
-- `npm test` voor alles, `npm run coverage` voor de rekenkern: die blijft op 100%.
+- `npm run check` voor alles in één keer: typecheck, lint en dekking.
+- `npm run typecheck` draait `tsc -b --force`: zonder --force houdt tsc oude resultaten aan en
+  mis je fouten in bestanden die je net hebt aangeraakt.
+- `npm test` voor alleen de tests, `npm run coverage` voor de rekenkern: die blijft op 100%.
 - De testcasus Loodgieter Jansen en de invarianten (balans sluit elke maand) mogen nooit breken.
 - Nieuwe rekenregels krijgen een test met een met de hand na te rekenen uitkomst.
 
